@@ -102,7 +102,19 @@ class MyWMAssigner extends AssignerWithPeriodicWatermarks[SensorReading] {
 
 // 自定义一个断点式生成WaterMark的Assigner
 class MyWMAssigner2 extends AssignerWithPunctuatedWatermarks[SensorReading] {
-    override def checkAndGetNextWatermark(lastElement: SensorReading, extractedTimestamp: Long): Watermark = ???
+    val lateness: Long = 1000L
 
-    override def extractTimestamp(element: SensorReading, previousElementTimestamp: Long): Long = ???
+    // 每来一条数据的时候，两个方法都会调。先check，更新lastElement。后extract，提取时间戳
+    override def checkAndGetNextWatermark(
+                                             lastElement: SensorReading,
+                                             extractedTimestamp: Long): Watermark = {
+            // 只有 sensor_1 传感器的数据来的时候，才生成一个WaterMark
+        if(lastElement.id == "sensor_1"){
+            new Watermark(extractedTimestamp - lateness)
+        }else
+            null
+    }
+
+    override def extractTimestamp(element: SensorReading, previousElementTimestamp: Long): Long =
+        element.timestamp * 1000L
 }
