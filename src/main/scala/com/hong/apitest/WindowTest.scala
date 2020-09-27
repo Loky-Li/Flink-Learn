@@ -4,7 +4,7 @@ import org.apache.flink.streaming.api.scala._
 import org.apache.flink.streaming.api.windowing.assigners.{EventTimeSessionWindows, SlidingProcessingTimeWindows, TumblingEventTimeWindows}
 import org.apache.flink.streaming.api.windowing.time.Time
 import com.hong.apitest.MySensorSource
-import org.apache.flink.api.java.tuple.Tuple
+import org.apache.flink.api.java.tuple.{Tuple,Tuple1}
 import org.apache.flink.streaming.api.scala.function.WindowFunction
 import org.apache.flink.streaming.api.windowing.windows.TimeWindow
 import org.apache.flink.util.Collector
@@ -71,14 +71,22 @@ object WindowTest {
 }
 
 // 自定义一个全窗口函数
-class MyWindowFunction() extends WindowFunction[SensorReading, Int, Tuple, TimeWindow] {
+class MyWindowFunction() extends WindowFunction[SensorReading, (String,Long,Long,Int), Tuple, TimeWindow] {
+
+
+
     override def apply(
                           key: Tuple, // keyBy() 后，从源码知，得到的Key是JavaTuple
                           window: TimeWindow,
                           input: Iterable[SensorReading],
-                          out: Collector[Int]): Unit = {
+                          out: Collector[(String,Long,Long,Int)]): Unit = {
 
-        out.collect(input.toList.size) // 定义输出的是窗口元素量
+        // 将Tuple类型的key，转成string类型。Tuple1 是java的类型
+        val id:String = key.asInstanceOf[Tuple1[String]].f0
+        // 如果用 key.toString ，得到的 结果是 (sensor_2)，即tuple的个格式，有小括号括起来
+
+
+        out.collect((id,window.getStart,window.getEnd,input.toList.size)) // 定义输出的是窗口元素量
     }
 }
 
