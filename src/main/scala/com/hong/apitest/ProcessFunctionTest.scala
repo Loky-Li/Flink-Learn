@@ -84,7 +84,7 @@ class TempIncreWarning(interval: Long) extends KeyedProcessFunction[Tuple,Sensor
 
     }
 
-    // 定时器触发时，调用 onTimer() 方法。10秒内没有下降的温度，报警
+    // 定时器触发时，调用 onTimer() 方法。10秒内没有下降的温度，报警。定时器按key粒度控制。
 
     // 如果注册了多个定时器，由于只有一个onTimer方法。但是不同的定时器想不同的处理逻辑，
     // 则可以通过多个定时器的时间戳，和 onTimer的 timestamp进行对比判断。
