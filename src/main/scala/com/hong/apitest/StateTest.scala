@@ -73,6 +73,7 @@ class MyProcessor extends KeyedProcessFunction[String, SensorReading, Int] {
 
 
     // 使用 lazy 的原因是：程序一开始，并还没有 RuntimeContext！
+    // scala知识：lazy 只能更 val 修饰的变量，但是可以更新
     lazy val myState: ValueState[Int] =
         getRuntimeContext.getState(new ValueStateDescriptor[Int]("my-state", classOf[Int]))
 
@@ -135,7 +136,7 @@ class MyProcessor extends KeyedProcessFunction[String, SensorReading, Int] {
     }
 }
 
-// 如果想实现一个算子状态的保存 （拓展，用得比较少。）
+// 如果想实现一个算子状态的保存 （拓展，用得比较少。案例见底部！）
 class MyReduceFunctionWithState extends ReduceFunction[SensorReading] with ListCheckpointed[SensorReading] {
     override def reduce(value1: SensorReading, value2: SensorReading): SensorReading = ???
 
@@ -204,3 +205,55 @@ class TempChangeWraning2(threshold: Double) extends RichFlatMapFunction[SensorRe
         }
     }
 }
+
+// operator state 示例：在keyBy() 前
+// 需求：统计所有输入的数据条数
+class MyMapper() extends RichMapFunction[SensorReading,Long] {
+/*
+    operator state 没有 valueState这个数据类型，它是 keyed state的数据类型
+    lazy val countState: ValueState[Long] =
+        getRuntimeContext.getState(new ValueStateDescriptor[Long]("count-records",classOf[Long]))
+        */
+
+    var count: Long = 0L
+
+    override def map(value: SensorReading): Long = {
+        count += 1
+        count
+        // 如果发生故障，这个值就丢了，因为是jvm的变量。（是否还有不同分区的count不同的问题呢？）
+
+    }
+}
+
+// todo 优化 将 operator state 的变量状态化保存
+class MyMapper2() extends RichMapFunction[SensorReading,Long] with ListCheckpointed[Long]{
+
+    var count: Long = 0L
+
+    override def map(value: SensorReading): Long = {
+        count += 1
+        count
+    }
+
+    // 将需要保存的值，做快照保存到List中
+    override def snapshotState(checkpointId: Long, timestamp: Long): util.List[Long] = {
+        val stateList = new util.ArrayList[Long]()
+        stateList.add(count)
+        stateList
+    }
+
+    // 将保存的状态，恢复出来。（如发生故障，将保存的状态取出）
+    override def restoreState(state: util.List[Long]): Unit = {
+        val iter: util.Iterator[Long] = state.iterator()
+        while(iter.hasNext){
+            count += iter.next()
+        }
+
+//        for(countState <- state){
+//            count += countState
+//        }
+
+
+    }
+}
+
