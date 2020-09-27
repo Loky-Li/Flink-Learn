@@ -35,12 +35,13 @@ object StateTest {
             })
 
         val resultStream = dataStream
-            .keyBy("id")
-            //            .flatMap(new TempChangeWraning2(10.0))
+            .keyBy("id")        // keyStream() extend DataStream, 所以keyBy() 后调用DataStream的 flatMap()方法，没有歧义。
 
-            // 除了传入一个带状态编程的富函数，还可以直接使用算子。底层包装了状态变量的转换过程。
+            //            .flatMap(new TempChangeWraning2(10.0))        // 方式1：自定义富函数实现。 DataStream的方法。见上面解释。
+
+            // 方式二：除了传入一个带状态编程的富函数，还可以直接使用算子。底层包装了状态变量的转换过程。
             // flatMapWithState[输出的类型,状态变量的泛型的数据类型]
-            .flatMapWithState[(String, Double, Double), Double]({
+            .flatMapWithState[(String, Double, Double), Double]({       // 只有keyStream() 有这个方法
                 case (inputData: SensorReading, None) => (List.empty, Some(inputData.temperature))
                 case (inputData: SensorReading, lastTemp: Some[Double]) => {
                     val curTemp: Double = inputData.temperature
@@ -134,7 +135,7 @@ class MyProcessor extends KeyedProcessFunction[String, SensorReading, Int] {
     }
 }
 
-// 如果想实现一个算子状态的保存 （拓展，用得比较少）
+// 如果想实现一个算子状态的保存 （拓展，用得比较少。）
 class MyReduceFunctionWithState extends ReduceFunction[SensorReading] with ListCheckpointed[SensorReading] {
     override def reduce(value1: SensorReading, value2: SensorReading): SensorReading = ???
 
