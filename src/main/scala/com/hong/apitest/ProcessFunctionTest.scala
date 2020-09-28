@@ -26,7 +26,9 @@ object ProcessFunctionTest {
 
         // 需求：检查每一个传感器10s内，温度是否连续上升。如符合，则报警
         val warningStream = dataStream
-            .keyBy("id")
+            .keyBy("id")        // 这种方式，后面KeyedProcessFunction[String,SensorReading,String]需使用Tuple
+            // 下面使用函数作为参数时，后面可直接，KeyedProcessFunction[String,SensorReading,String]就无需使用Tuple作为key的类型
+//                .keyBy(_.id)
             .process(new TempIncreWarning(10000L))
 
         warningStream.print()

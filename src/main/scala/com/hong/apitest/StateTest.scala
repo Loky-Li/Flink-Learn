@@ -1,6 +1,6 @@
 package com.hong.apitest
 
-import java.util
+import java.{lang, util}
 
 import org.apache.flink.api.common.functions.{ReduceFunction, RichFlatMapFunction, RichMapFunction}
 import org.apache.flink.api.common.state.{ListState, ListStateDescriptor, MapState, MapStateDescriptor, ReducingState, ReducingStateDescriptor, ValueState, ValueStateDescriptor}
@@ -35,13 +35,13 @@ object StateTest {
             })
 
         val resultStream = dataStream
-            .keyBy("id")        // keyStream() extend DataStream, 所以keyBy() 后调用DataStream的 flatMap()方法，没有歧义。
+            .keyBy("id") // keyStream() extend DataStream, 所以keyBy() 后调用DataStream的 flatMap()方法，没有歧义。
 
             //            .flatMap(new TempChangeWraning2(10.0))        // 方式1：自定义富函数实现。 DataStream的方法。见上面解释。
 
             // 方式二：除了传入一个带状态编程的富函数，还可以直接使用算子。底层包装了状态变量的转换过程。
             // flatMapWithState[输出的类型,状态变量的泛型的数据类型]
-            .flatMapWithState[(String, Double, Double), Double]({       // 只有keyStream() 有这个方法
+            .flatMapWithState[(String, Double, Double), Double]({ // 只有keyStream() 有这个方法
                 case (inputData: SensorReading, None) => (List.empty, Some(inputData.temperature))
                 case (inputData: SensorReading, lastTemp: Some[Double]) => {
                     val curTemp: Double = inputData.temperature
@@ -49,13 +49,13 @@ object StateTest {
                     if (diff > 10.0) {
                         (
                             List((inputData.id, lastTemp, curTemp))
-                            ,Some(curTemp)      // 更新状态变量
+                            , Some(curTemp) // 更新状态变量
                         )
 
                     } else {
                         (
                             List.empty
-                            ,Some(curTemp)
+                            , Some(curTemp)
                         )
                     }
                 }
@@ -75,13 +75,13 @@ class MyProcessor extends KeyedProcessFunction[String, SensorReading, Int] {
     // 使用 lazy 的原因是：程序一开始，并还没有 RuntimeContext！
     // scala知识：lazy 只能更 val 修饰的变量，但是可以更新
     lazy val myState: ValueState[Int] =
-        getRuntimeContext.getState(new ValueStateDescriptor[Int]("my-state", classOf[Int]))
+    getRuntimeContext.getState(new ValueStateDescriptor[Int]("my-state", classOf[Int]))
 
     //todo 注意：new ValueStateDescriptor[Int]("my-state", classOf[Int])中 name+类型
     // 可以确定一个状态变量。所以如果 name + 类型 相同，即使状态变量 名称不同，在内存中都是同一份值
     // 所以下面 myState_other 和 myState， 是同一个状态变量。
     lazy val myState_other: ValueState[Int] =
-        getRuntimeContext.getState(new ValueStateDescriptor[Int]("my-state", classOf[Int]))
+    getRuntimeContext.getState(new ValueStateDescriptor[Int]("my-state", classOf[Int]))
 
     // 另外一种定义 lazy state 的方式。由于程序运行的时候，才有 runtimeContext。所以可以放在生命周期中定义
     var myState2: ValueState[Int] = _
@@ -208,12 +208,12 @@ class TempChangeWraning2(threshold: Double) extends RichFlatMapFunction[SensorRe
 
 // operator state 示例：在keyBy() 前
 // 需求：统计所有输入的数据条数
-class MyMapper() extends RichMapFunction[SensorReading,Long] {
-/*
-    operator state 没有 valueState这个数据类型，它是 keyed state的数据类型
-    lazy val countState: ValueState[Long] =
-        getRuntimeContext.getState(new ValueStateDescriptor[Long]("count-records",classOf[Long]))
-        */
+class MyMapper() extends RichMapFunction[SensorReading, Long] {
+    /*
+        operator state 没有 valueState这个数据类型，它是 keyed state的数据类型
+        lazy val countState: ValueState[Long] =
+            getRuntimeContext.getState(new ValueStateDescriptor[Long]("count-records",classOf[Long]))
+            */
 
     var count: Long = 0L
 
@@ -226,7 +226,9 @@ class MyMapper() extends RichMapFunction[SensorReading,Long] {
 }
 
 // todo 优化 将 operator state 的变量状态化保存
-class MyMapper2() extends RichMapFunction[SensorReading,Long] with ListCheckpointed[Long]{
+class MyMapper2() extends RichMapFunction[SensorReading, Long]
+    with ListCheckpointed[java.lang.Long] {
+    // 泛型 ListCheckpointed<T extends Serializable> 需要序列化，而scala的Long无法序列化。
 
     var count: Long = 0L
 
@@ -243,16 +245,14 @@ class MyMapper2() extends RichMapFunction[SensorReading,Long] with ListCheckpoin
     }
 
     // 将保存的状态，恢复出来。（如发生故障，将保存的状态取出）
-    override def restoreState(state: util.List[Long]): Unit = {
-        val iter: util.Iterator[Long] = state.iterator()
-        while(iter.hasNext){
-            count += iter.next()
+
+    override def restoreState(state: util.List[lang.Long]): Unit = {
+        {
+            val iter: util.Iterator[lang.Long] = state.iterator()
+            while (iter.hasNext) {
+                count += iter.next()
+            }
         }
-
-//        for(countState <- state){
-//            count += countState
-//        }
-
 
     }
 }
