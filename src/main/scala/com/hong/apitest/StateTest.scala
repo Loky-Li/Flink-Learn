@@ -41,8 +41,9 @@ object StateTest {
 
             // 方式二：除了传入一个带状态编程的富函数，还可以直接使用算子。底层包装了状态变量的转换过程。
             // flatMapWithState[输出的类型,状态变量的泛型的数据类型]
-            .flatMapWithState[(String, Double, Double), Double]({ // 只有keyStream() 有这个方法
-                case (inputData: SensorReading, None) => (List.empty, Some(inputData.temperature))
+/*            .flatMapWithState[(String, Double, Double), Double]({ // 只有keyStream() 有这个方法
+                case (inputData: SensorReading, None) =>
+                    (List.empty, Some(inputData.temperature))
                 case (inputData: SensorReading, lastTemp: Some[Double]) => {
                     val curTemp: Double = inputData.temperature
                     val diff = (curTemp - lastTemp).abs
@@ -61,7 +62,7 @@ object StateTest {
                 }
             }
 
-            )
+            )*/
 
         resultStream.print()
 
@@ -226,20 +227,20 @@ class MyMapper() extends RichMapFunction[SensorReading, Long] {
 }
 
 // todo 优化 将 operator state 的变量状态化保存
-class MyMapper2() extends RichMapFunction[SensorReading, Long]
+class MyMapper2() extends RichMapFunction[SensorReading, lang.Long]
     with ListCheckpointed[java.lang.Long] {
     // 泛型 ListCheckpointed<T extends Serializable> 需要序列化，而scala的Long无法序列化。
 
-    var count: Long = 0L
+    var count: lang.Long = 0L
 
-    override def map(value: SensorReading): Long = {
+    override def map(value: SensorReading): lang.Long = {
         count += 1
         count
     }
 
     // 将需要保存的值，做快照保存到List中
-    override def snapshotState(checkpointId: Long, timestamp: Long): util.List[Long] = {
-        val stateList = new util.ArrayList[Long]()
+    override def snapshotState(checkpointId: Long, timestamp: Long): util.List[lang.Long] = {
+        val stateList = new util.ArrayList[lang.Long]()
         stateList.add(count)
         stateList
     }

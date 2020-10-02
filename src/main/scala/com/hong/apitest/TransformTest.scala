@@ -116,7 +116,7 @@ class MyReduce() extends ReduceFunction[SensorReading] {
 }
 
 // 自定义MapFunction
-class MyMapper extends MapFunction[SensorReading, (String, Double)] {
+class MyMapper3 extends MapFunction[SensorReading, (String, Double)] {
     override def map(value: SensorReading): (String, Double) =
         (value.id, value.temperature)
 }

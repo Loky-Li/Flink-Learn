@@ -41,12 +41,12 @@
             <version>1.10.0</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
-<!--        <dependency>
+<!--         https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+        <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>5.6.24</version>
-        </dependency>-->
+            <version>5.1.6</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.flink</groupId>
@@ -54,7 +54,30 @@
             <version>1.10.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner_2.11</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+<!--        有了planner后，下面的bridge会一起导入-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-api-scala-bridge_2.11</artifactId>
+            <version>1.10.0</version>
+        </dependency>
 
+<!--引入阿里的blink版本-->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-table-planner-blink_2.11</artifactId>
+            <version>1.10.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-csv</artifactId>
+            <version>1.10.0</version>
+        </dependency>
 
 
     </dependencies>
