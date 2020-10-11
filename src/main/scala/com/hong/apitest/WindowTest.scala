@@ -52,7 +52,7 @@ object WindowTest {
             // 来一条迟到就计算并输出一次
             .allowedLateness(Time.minutes(1))
             // 机制3：侧输出流。整个窗口关闭后，还有迟到数据。
-            // 将原来已关闭的窗口聚合结果再拿出来和迟到数据计算
+            // 将原来窗口由于已经销毁，所以迟到数据只会打印输出，不会做逻辑计算
             .sideOutputLateData(new OutputTag[SensorReading]("late_test"))
 
             .apply(new MyWindowFunction()) // 测试2：全窗口函数
